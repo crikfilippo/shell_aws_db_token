@@ -13,8 +13,8 @@ declare -A AWSHOSTS=( #ELENCO HOST
 )
 
 declare -A AWSUSERS=( #ELENCO UTENTI
-    ["DEVELOPMENT"]="etl_user_15"
-    ["INTEGRATION"]="etl_user_15"
+    ["etl_user_15"]="etl_user_15"
+    ["etl_user_99"]="etl_user_99"
 )
 
 #VALORE HOST - SE "" ABILITA SELEZIONE UTENTE
@@ -22,17 +22,19 @@ AWSHOST=""
 #AWSHOST=${AWSHOSTS[DEVELOPMENT]}
 
 #VALORE USER - SE "" ABILITA SELEZIONE UTENTE
-AWSUSER = ""
+AWSUSER=""
 #AWSUSER=${AWSUSERS[DEVELOPMENT]}
 
 function SEL_ARRVAL() {
 
     declare -n arr="$1"
+    declare -n msg="$2"
     local index=1
     local nomi=()
 
-    echo "" > `tty`	
-    echo "SCEGLI HOST:" > `tty`
+    echo "" > `tty`
+    echo "${msg}" > `tty`
+    #echo "" > `tty`
 
     for nome in "${!arr[@]}"; do
         echo "$index) $nome" > `tty`
@@ -58,7 +60,8 @@ function SEL_ARRVAL() {
 
 
 if [[ -z "$AWSHOST" ]]; then
-	AWSHOST=$(SEL_ARRVAL AWSHOSTS) # Passa l'array associativo come argomento
+	MSG="SCEGLI HOST:"
+	AWSHOST=$(SEL_ARRVAL AWSHOSTS MSG) # Passa l'array associativo come argomento
 	if [[ -z "$AWSHOST" ]]; then
 	    	echo "ERRORE: HOST SCELTO  NON VALIDO."
 	    	exit 1
@@ -67,7 +70,8 @@ fi
 
 
 if [[ -z "$AWSUSER" ]]; then
-	AWSHOST=$(SEL_ARRVAL AWSUSERS) # Passa l'array associativo come argomento
+	MSG="SCEGLI UTENTE:"
+	AWSUSER=$(SEL_ARRVAL AWSUSERS MSG) # Passa l'array associativo come argomento
 	if [[ -z "$AWSUSER" ]]; then
 	    	echo "ERRORE: USER SCELTO  NON VALIDO."
 	    	exit 1
