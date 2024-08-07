@@ -1,4 +1,4 @@
-# Variabili di configurazione. --
+# Variabili di configurazione.
 
 GENFILE  - SE 1 GENERA FILE ED APRE CON GEDIT, SE 0  MOSTRA TOKEN IN SHELL
 OPNFILE  - SE 1 APRE FILE CON GEDIT AL TERMINE DELLA GENERAZIONE
