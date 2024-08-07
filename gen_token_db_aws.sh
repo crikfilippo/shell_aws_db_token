@@ -4,7 +4,6 @@ GENFILE=0 #GENERA FILE ED APRI CON GEDIT / MOSTRA TOKEN
 OPNFILE=0 #APRI FILE CON GEDIT AL TERMINE DELLA GENERAZIONE
 FILENAME="last_token_db_aws.txt" #NOME FILE GENERATO
 FILEPATH=$HOME/script/$FILENAME #PATH FILE GENERATO
-AWSUSER="etl_user_15" #NOME UTENTE
 AWSPORT="5432" #PORTA DEL DB
 #AWSDB="postgres" #NOME DB
 
@@ -13,9 +12,18 @@ declare -A AWSHOSTS=( #ELENCO HOST
     ["INTEGRATION"]="integration-db-cloned-cluster.cluster-ro-c0kkcwcgpb14.eu-central-1.rds.amazonaws.com"
 )
 
+declare -A AWSUSERS=( #ELENCO UTENTI
+    ["DEVELOPMENT"]="etl_user_15"
+    ["INTEGRATION"]="etl_user_15"
+)
+
 #VALORE HOST - SE "" ABILITA SELEZIONE UTENTE
 AWSHOST="" 
 #AWSHOST=${AWSHOSTS[DEVELOPMENT]}
+
+#VALORE USER - SE "" ABILITA SELEZIONE UTENTE
+AWSUSER = ""
+#AWSUSER=${AWSUSERS[DEVELOPMENT]}
 
 function SEL_ARRVAL() {
 
@@ -49,15 +57,19 @@ function SEL_ARRVAL() {
 }
 
 
-# Loop finché l'utente non inserisce una scelta valida
-#while [[ -z "$AWSHOST" ]]; do
-#    AWSHOST=$(SEL_ARRVAL AWSHOSTS) # Passa l'array associativo come argomento
-#done
-
 if [[ -z "$AWSHOST" ]]; then
 	AWSHOST=$(SEL_ARRVAL AWSHOSTS) # Passa l'array associativo come argomento
 	if [[ -z "$AWSHOST" ]]; then
 	    	echo "ERRORE: HOST SCELTO  NON VALIDO."
+	    	exit 1
+	fi
+fi
+
+
+if [[ -z "$AWSUSER" ]]; then
+	AWSHOST=$(SEL_ARRVAL AWSUSERS) # Passa l'array associativo come argomento
+	if [[ -z "$AWSUSER" ]]; then
+	    	echo "ERRORE: USER SCELTO  NON VALIDO."
 	    	exit 1
 	fi
 fi
