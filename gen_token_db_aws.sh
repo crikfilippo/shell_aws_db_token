@@ -9,35 +9,43 @@ AWSPORT="5432"                          #PORTA DEL DB
 #AWSDB="postgres"                       #NOME DB
 FILCRDS="credentials"                   #NOME FILE CREDENZIALI (default AWS)
 PATCRDS=$HOME/.aws/$FILCRDS             #PATH FILE CREDENZIALI (default AWS)
-
-
-
-declare -A AWSHOSTS=( #ELENCO HOST
-    ["DEVELOPMENT"]="onlinedb-development.cluster-crrubykox7bs.eu-central-1.rds.amazonaws.com"
-    ["INTEGRATION"]="onlinedb-moved-bedbug-2.c0kkcwcgpb14.eu-central-1.rds.amazonaws.com"
+declare -A AWSCRDSS                     #ELENCO CREDENZIALI (estratte automaticamente)
+declare -A AWSUSERS=(                   #ELENCO UTENTI
+  ["etl_user_15"]="etl_user_15"
+  ["etl_user"]="etl_user"
 )
 
-declare -A AWSUSERS=( #ELENCO UTENTI
-    ["etl_user_15"]="etl_user_15"
-    ["etl_user"]="etl_user"
+declare -A AWSHOSTS=(                   #ELENCO HOST
+  ["DEVELOPMENT"]="onlinedb-development.cluster-crrubykox7bs.eu-central-1.rds.amazonaws.com"
+  ["INTEGRATION"]="onlinedb-moved-bedbug-2.c0kkcwcgpb14.eu-central-1.rds.amazonaws.com"
 )
 
-declare -A AWSCRDSS #ELENCO CREDENZIALI (estratte automaticamente)
-#declare -A AWSCNFGS #ELENCO CONFIGURAZIONI (estratte automaticamente)
 
-#SE "" ABILITA SELEZIONE HOST
-AWSHOST=""   
-#AWSHOST=${AWSHOSTS[DEVELOPMENT]}
+#PROFILI GENERALI
+declare -A MAINPRFS
 
-#SE "" ABILITA SELEZIONE UTENTE 
-AWSUSER="" 
-#AWSUSER=${AWSUSERS[etl_user_15]}
+#profilo development
+MAINPRFS["DEVELOPMENT","AWSHOST"]=${AWSHOSTS[DEVELOPMENT]}
+MAINPRFS["DEVELOPMENT","AWSUSER"]=${AWSUSERS[etl_user_15]}
+MAINPRFS["DEVELOPMENT","AWSCRDS"]="default"
 
-#SE "" ABILITA SELEZIONE CREDENZIALI 
-AWSCRDS="" 
-#AWSCRDS="default"
+#profilo integration
+MAINPRFS["INTEGRATION","AWSHOST"]=${AWSHOSTS[INTEGRATION]}
+MAINPRFS["INTEGRATION","AWSUSER"]=${AWSUSERS[etl_user]}
+MAINPRFS["INTEGRATION","AWSCRDS"]="integration"
+
+#PROFILO SCELTA MANUALE, NON MODIFICARE
+MAINPRFS["MANUAL","AWSHOST"]=""
+MAINPRFS["MANUAL","AWSUSER"]=""
+MAINPRFS["MANUAL","AWSCRDS"]=""
 
 
+#PROFILO PRESELEZIONATO, SE "" ABILITA SCELTA
+#MAINPRF="DEVELOPMENT"
+MAINPRF=""
+
+
+###############################################################################################
 
 
 #FUNZIONE PER CHIEDERE A UTENTE DI ESTRARRE 1 VALORE DA ARRAY ASSOCIATIVO 
@@ -75,87 +83,125 @@ function SEL_ARRVAL() {
 }
 
 
-#RICHIEDI VALORE HOST
-if [[ -z "$AWSHOST" ]]; then
+#RICHIEDI PROFILO PRINCIPALE
+if [[ -z "$MAINPRF" ]]; then
+
   #verifica presenza dati
-  if [ ${#AWSHOSTS[@]} -eq 0 ]; then  
+  if [ ${#MAINPRFS[@]} -eq 0 ]; then  
+    echo "ERRORE: NESSUN PROFILO CONNESSIONE TROVATO."
+    exit 1  
+  fi
+  
+  # Estrazione delle chiavi padri da profili
+  declare -A MAINPRFS_KEYS  
+  for key in "${!MAINPRFS[@]}"; do
+    parent_key="${key%%,*}"  # Estrae la parte prima della virgola
+    MAINPRFS_KEYS["$parent_key"]="$parent_key"  # Aggiunge la chiave al dizionario
+  done
+
+  #richiedi selelione
+ 	MSG="SCEGLI PROFILO CONN:"
+ 	MAINPRF=$(SEL_ARRVAL MAINPRFS_KEYS MSG) # Passa l'array associativo come argomento
+  if [[ -z "$MAINPRF" ]]; then
+    echo "ERRORE: PROFILO SCELTO  NON VALIDO."
+    exit 1
+  fi
+
+
+fi
+
+
+#PROFILO PRINCIPALE MANUALE, IMPOSTA TUTTI I VALORI
+if [ "$MAINPRF" == "MANUAL" ]; then
+  
+  
+  #RICHIEDI VALORE HOST
+  #if [[ -z "$AWSHOST" ]]; then
+    #verifica presenza dati
+    if [ ${#AWSHOSTS[@]} -eq 0 ]; then  
       echo "ERRORE: NESSUN HOST TROVATO."
       exit 1  
-  fi
-  #richiedi selelione
-	MSG="SCEGLI HOST:"
-	AWSHOST=$(SEL_ARRVAL AWSHOSTS MSG) # Passa l'array associativo come argomento
-	if [[ -z "$AWSHOST" ]]; then
-	    	echo "ERRORE: HOST SCELTO  NON VALIDO."
-	    	exit 1
-	fi
-fi
-
-#RICHIEDI VALORE USER
-if [[ -z "$AWSUSER" ]]; then
-  #verifica presenza dati
-  if [ ${#AWSUSERS[@]} -eq 0 ]; then  
-      echo "ERRORE: NESSUN UTENTE TROVATO."
-      exit 1  
-  fi
-  #richiedi selelione
-	MSG="SCEGLI UTENTE:"
-	AWSUSER=$(SEL_ARRVAL AWSUSERS MSG) # Passa l'array associativo come argomento
-	if [[ -z "$AWSUSER" ]]; then
-	    	echo "ERRORE: USER SCELTO  NON VALIDO."
-	    	exit 1
-	fi
-fi
-
-
-#RICHIEDI PROFILO CREDENZIALI
-if [[ -z "$AWSCRDS" ]]; then
-
-
-  # Verifica che il file esista
-  if [[ ! -f "$PATCRDS" ]]; then
-      echo "ERRORE: FILE CREDENZIALI NON TROVATO."
-      return 1
-  fi
-  
-  # Leggi il file delle credenziali riga per riga
-  while IFS= read -r line; do
-      # Se la riga inizia con [ e termina con ], estrae il nome del profilo
-    if [[ $line =~ ^\[(.*)\]$ ]]; then
-        profile_name="${BASH_REMATCH[1]}"
-        # Aggiunge il nome del profilo all'array associativo
-        AWSCRDSS["$profile_name"]="$profile_name"
     fi
-  done < "$PATCRDS"
     
-
-  #verifica presenza dati
-  if [ ${#AWSCRDSS[@]} -eq 0 ]; then
+    
+    #richiedi selezione
+  	MSG="SCEGLI HOST:"
+  	MAINPRFS["MANUAL","AWSHOST"]=$(SEL_ARRVAL AWSHOSTS MSG) # Passa l'array associativo come argomento
+  	if [[ -z "${MAINPRFS["MANUAL","AWSHOST"]}" ]]; then
+  	    	echo "ERRORE: HOST SCELTO  NON VALIDO."
+  	    	exit 1
+  	fi
+  #fi
   
-      echo "ERRORE: NESSUN PROFILO TROVATO."
-      exit 1
+  #RICHIEDI VALORE USER
+  #if [[ -z "$AWSUSER" ]]; then
+    #verifica presenza dati
+    if [ ${#AWSUSERS[@]} -eq 0 ]; then  
+        echo "ERRORE: NESSUN UTENTE TROVATO."
+        exit 1  
+    fi
+    #richiedi selezione
+  	MSG="SCEGLI UTENTE:"
+  	MAINPRFS["MANUAL","AWSUSER"]=$(SEL_ARRVAL AWSUSERS MSG) # Passa l'array associativo come argomento
+  	if [[ -z "${MAINPRFS["MANUAL","AWSUSER"]}" ]]; then
+  	    	echo "ERRORE: USER SCELTO  NON VALIDO."
+  	    	exit 1
+  	fi
+  #fi
   
-   fi
- 
   
-  #richiedi scelta
- 	MSG="SCEGLI PROF. CREDENZIALI:"
-	AWSCRDS=$(SEL_ARRVAL AWSCRDSS MSG) # Passa l'array associativo come argomento
-	if [[ -z "$AWSCRDS" ]]; then
-	    	echo "ERRORE: PROFILO SCELTO NON VALIDO."
-	    	exit 1
-  fi
-        
-  	
+  #RICHIEDI PROFILO CREDENZIALI
+  #if [[ -z "$AWSCRDS" ]]; then
+  
+  
+    # Verifica che il file esista
+    if [[ ! -f "$PATCRDS" ]]; then
+        echo "ERRORE: FILE CREDENZIALI NON TROVATO."
+        return 1
+    fi
+    
+    # Leggi il file delle credenziali riga per riga
+    while IFS= read -r line; do
+        # Se la riga inizia con [ e termina con ], estrae il nome del profilo
+      if [[ $line =~ ^\[(.*)\]$ ]]; then
+          profile_name="${BASH_REMATCH[1]}"
+          # Aggiunge il nome del profilo all'array associativo
+          AWSCRDSS["$profile_name"]="$profile_name"
+      fi
+    done < "$PATCRDS"
+      
+  
+    #verifica presenza dati
+    if [ ${#AWSCRDSS[@]} -eq 0 ]; then
+    
+        echo "ERRORE: NESSUN PROF. CREDENZIALI TROVATO."
+        exit 1
+    
+     fi
+   
+    
+    #richiedi scelta
+   	MSG="SCEGLI PROF. CREDENZIALI:"
+  	MAINPRFS["MANUAL","AWSCRDS"]=$(SEL_ARRVAL AWSCRDSS MSG) # Passa l'array associativo come argomento
+  	if [[ -z "${MAINPRFS["MANUAL","AWSCRDS"]}" ]]; then
+  	    	echo "ERRORE: PROFILO SCELTO NON VALIDO."
+  	    	exit 1
+    fi
+          
+    	
+  #fi 
+  
 fi
 
 
 #predisposizione comando token
-TKNSTR="aws rds generate-db-auth-token --hostname $AWSHOST --port $AWSPORT --region eu-central-1 --username $AWSUSER --profile $AWSCRDS"
+TKNSTR="aws rds generate-db-auth-token --hostname ${MAINPRFS["$MAINPRF,AWSHOST"]} --port $AWSPORT --region eu-central-1 --username ${MAINPRFS["$MAINPRF,AWSUSER"]} --profile ${MAINPRFS["$MAINPRF,AWSCRDS"]}"
+
 
 
 #generazione token
 echo "GENERAZIONE TOKEN IN CORSO..."
+#echo "COMANDO GENERATO: $TKNSTR"
 TOKEN=$($TKNSTR)
 
 
@@ -184,7 +230,7 @@ fi
 #stampa token a console
 if [ "$PRNTOKN" -eq "1" ]; then
 
-  echo "TOKEN GENERATO:"
+  echo "VALORE TOKEN:"
   echo ""
   echo $TOKEN
   echo ""
