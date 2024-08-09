@@ -1,11 +1,15 @@
 #!/bin/bash
 
-GENFILE=0 #GENERA FILE ED APRI CON GEDIT / MOSTRA TOKEN
-OPNFILE=0 #APRI FILE CON GEDIT AL TERMINE DELLA GENERAZIONE
-FILENAME="last_token_db_aws.txt" #NOME FILE GENERATO
-FILEPATH=$HOME/script/$FILENAME #PATH FILE GENERATO
-AWSPORT="5432" #PORTA DEL DB
-#AWSDB="postgres" #NOME DB
+GENFILE=0                               #GENERA FILE ED APRI CON GEDIT / MOSTRA TOKEN
+OPNFILE=0                               #APRI FILE CON GEDIT AL TERMINE DELLA GENERAZIONE
+FILTOKN="last_token_db_aws.txt"         #NOME FILE GENERATO
+PATTOKN=$HOME/script/$FILTOKN           #PATH FILE GENERATO
+AWSPORT="5432"                          #PORTA DEL DB
+#AWSDB="postgres"                       #NOME DB
+FILCRDS="credentials"                   #NOME FILE CREDENZIALI (default AWS)
+PATCRDS=$HOME/.aws/$FILCRDS             #PATH FILE CREDENZIALI (default AWS)
+
+
 
 declare -A AWSHOSTS=( #ELENCO HOST
     ["DEVELOPMENT"]="onlinedb-development.cluster-crrubykox7bs.eu-central-1.rds.amazonaws.com"
@@ -17,14 +21,25 @@ declare -A AWSUSERS=( #ELENCO UTENTI
     ["etl_user_99"]="etl_user_99"
 )
 
-#VALORE HOST - SE "" ABILITA SELEZIONE UTENTE
-AWSHOST="" 
+declare -A AWSCRDSS #ELENCO CREDENZIALI (estratte automaticamente)
+#declare -A AWSCNFGS #ELENCO CONFIGURAZIONI (estratte automaticamente)
+
+#SE "" ABILITA SELEZIONE HOST
+AWSHOST=""   
 #AWSHOST=${AWSHOSTS[DEVELOPMENT]}
 
-#VALORE USER - SE "" ABILITA SELEZIONE UTENTE
-AWSUSER=""
-#AWSUSER=${AWSUSERS[DEVELOPMENT]}
+#SE "" ABILITA SELEZIONE UTENTE 
+AWSUSER="" 
+#AWSUSER=${AWSUSERS[etl_user_15]}
 
+#SE "" ABILITA SELEZIONE CREDENZIALI 
+AWSCRDS="" 
+#AWSCRDS="default"
+
+
+
+
+#FUNZIONE PER CHIEDERE A UTENTE DI ESTRARRE 1 VALORE DA ARRAY ASSOCIATIVO 
 function SEL_ARRVAL() {
 
     declare -n arr="$1"
@@ -59,7 +74,14 @@ function SEL_ARRVAL() {
 }
 
 
+#RICHIEDI VALORE HOST
 if [[ -z "$AWSHOST" ]]; then
+  #verifica presenza dati
+  if [ ${#AWSHOSTS[@]} -eq 0 ]; then  
+      echo "ERRORE: NESSUN HOST TROVATO."
+      exit 1  
+  fi
+  #richiedi selelione
 	MSG="SCEGLI HOST:"
 	AWSHOST=$(SEL_ARRVAL AWSHOSTS MSG) # Passa l'array associativo come argomento
 	if [[ -z "$AWSHOST" ]]; then
@@ -68,8 +90,14 @@ if [[ -z "$AWSHOST" ]]; then
 	fi
 fi
 
-
+#RICHIEDI VALORE USER
 if [[ -z "$AWSUSER" ]]; then
+  #verifica presenza dati
+  if [ ${#AWSUSERS[@]} -eq 0 ]; then  
+      echo "ERRORE: NESSUN UTENTE TROVATO."
+      exit 1  
+  fi
+  #richiedi selelione
 	MSG="SCEGLI UTENTE:"
 	AWSUSER=$(SEL_ARRVAL AWSUSERS MSG) # Passa l'array associativo come argomento
 	if [[ -z "$AWSUSER" ]]; then
@@ -78,9 +106,56 @@ if [[ -z "$AWSUSER" ]]; then
 	fi
 fi
 
-echo "GENERAZIONE TOKEN IN CORSO..."
 
-TOKEN=$(aws rds generate-db-auth-token --hostname $AWSHOST --port $AWSPORT --region eu-central-1 --username $AWSUSER)
+#RICHIEDI PROFILO CREDENZIALI
+if [[ -z "$AWSCRDS" ]]; then
+
+
+  # Verifica che il file esista
+  if [[ ! -f "$PATCRDS" ]]; then
+      echo "ERRORE: FILE CREDENZIALI NON TROVATO."
+      return 1
+  fi
+  
+  # Leggi il file delle credenziali riga per riga
+  while IFS= read -r line; do
+      # Se la riga inizia con [ e termina con ], estrae il nome del profilo
+    if [[ $line =~ ^\[(.*)\]$ ]]; then
+        profile_name="${BASH_REMATCH[1]}"
+        # Aggiunge il nome del profilo all'array associativo
+        AWSCRDSS["$profile_name"]="$profile_name"
+    fi
+  done < "$PATCRDS"
+    
+
+  #verifica presenza dati
+  if [ ${#AWSCRDSS[@]} -eq 0 ]; then
+  
+      echo "ERRORE: NESSUN PROFILO TROVATO."
+      exit 1
+  
+   fi
+ 
+  
+  #richiedi scelta
+ 	MSG="SCEGLI PROF. CREDENZIALI:"
+	AWSCRDS=$(SEL_ARRVAL AWSCRDSS MSG) # Passa l'array associativo come argomento
+	if [[ -z "$AWSCRDS" ]]; then
+	    	echo "ERRORE: PROFILO SCELTO NON VALIDO."
+	    	exit 1
+  fi
+        
+  	
+fi
+
+
+#predisposizione comando token
+TKNSTR="aws rds generate-db-auth-token --hostname $AWSHOST --port $AWSPORT --region eu-central-1 --username $AWSUSER --profile $AWSCRDS"
+
+
+#generazione token
+echo "GENERAZIONE TOKEN IN CORSO..."
+TOKEN=$($TKNSTR)
 
 
 if [[ $? -ne 0 ]]; then
@@ -93,7 +168,7 @@ echo ""
 
 if [ "$GENFILE" -eq "1" ]; then
     echo "GENERAZIONE FILE IN CORSO..."
-	echo $TOKEN > $FILEPATH
+	echo $TOKEN > $PATTOKN
 	if [[ $? -ne 0 ]]; then
 	    echo "ERRORE GENERAZIONE FILE."
 	    exit 1
@@ -102,14 +177,13 @@ if [ "$GENFILE" -eq "1" ]; then
 	echo ""
 	if [ "$OPNFILE" -eq "1" ]; then
 		echo "APERTURA GEDIT IN CORSO..."
-		gedit $FILEPATH
+		gedit $PATTOKN
 	fi
 else	
 	echo $TOKEN
 fi
 
-echo ""
 
-#echo ${AWSHOST}:${AWSPORT}:${AWSDB}:${AWSUSER}:${TOKEN} > $HOME/script/$FILENAME
+#echo ${AWSHOST}:${AWSPORT}:${AWSDB}:${AWSUSER}:${TOKEN} > $HOME/script/$FILTOKN
 #exit
 #sleep infinity
