@@ -1,6 +1,7 @@
 #!/bin/bash
 
-GENFILE=0                               #GENERA FILE ED APRI CON GEDIT / MOSTRA TOKEN
+PRNTOKN=1                               #MOSTRA TOKEN A CONSOLE
+GENFILE=0                               #GENERA FILE
 OPNFILE=0                               #APRI FILE CON GEDIT AL TERMINE DELLA GENERAZIONE
 FILTOKN="last_token_db_aws.txt"         #NOME FILE GENERATO
 PATTOKN=$HOME/script/$FILTOKN           #PATH FILE GENERATO
@@ -13,12 +14,12 @@ PATCRDS=$HOME/.aws/$FILCRDS             #PATH FILE CREDENZIALI (default AWS)
 
 declare -A AWSHOSTS=( #ELENCO HOST
     ["DEVELOPMENT"]="onlinedb-development.cluster-crrubykox7bs.eu-central-1.rds.amazonaws.com"
-    ["INTEGRATION"]="integration-db-cloned-cluster.cluster-ro-c0kkcwcgpb14.eu-central-1.rds.amazonaws.com"
+    ["INTEGRATION"]="onlinedb-moved-bedbug-2.c0kkcwcgpb14.eu-central-1.rds.amazonaws.com"
 )
 
 declare -A AWSUSERS=( #ELENCO UTENTI
     ["etl_user_15"]="etl_user_15"
-    ["etl_user_99"]="etl_user_99"
+    ["etl_user"]="etl_user"
 )
 
 declare -A AWSCRDSS #ELENCO CREDENZIALI (estratte automaticamente)
@@ -166,22 +167,38 @@ fi
 echo "TOKEN GENERATO."
 echo ""
 
+#genera file token
 if [ "$GENFILE" -eq "1" ]; then
-    echo "GENERAZIONE FILE IN CORSO..."
+
+  echo "GENERAZIONE FILE IN CORSO..."
 	echo $TOKEN > $PATTOKN
 	if [[ $? -ne 0 ]]; then
 	    echo "ERRORE GENERAZIONE FILE."
 	    exit 1
 	fi
-	echo "FILE GENERATO."
+  echo "FILE GENERATO."
 	echo ""
-	if [ "$OPNFILE" -eq "1" ]; then
-		echo "APERTURA GEDIT IN CORSO..."
-		gedit $PATTOKN
-	fi
-else	
-	echo $TOKEN
+ 
 fi
+
+#stampa token a console
+if [ "$PRNTOKN" -eq "1" ]; then
+
+  echo "TOKEN GENERATO:"
+  echo ""
+  echo $TOKEN
+  echo ""
+
+fi
+
+#apri file generato
+if [ "$OPNFILE" -eq "1" -a "$GENFILE" -eq "1" ]; then
+	
+  echo "APERTURA GEDIT IN CORSO..."
+  gedit $PATTOKN
+  
+fi
+
 
 
 #echo ${AWSHOST}:${AWSPORT}:${AWSDB}:${AWSUSER}:${TOKEN} > $HOME/script/$FILTOKN
