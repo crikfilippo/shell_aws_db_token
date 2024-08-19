@@ -1,34 +1,37 @@
-# Variabili di configurazione
+# Description
 
-<b>GENFILE</b>  - 	SE 1 GENERA FILE ED APRE CON GEDIT, SE 0  MOSTRA TOKEN IN SHELL
-</br><b>OPNFILE</b>  -  SE 1 APRE FILE CON GEDIT AL TERMINE DELLA GENERAZIONE
-</br><b>FILTOKN</b>  -  NOME ED ESTENSIONE FILE GENERATO
-</br><b>PATTOKN</b>  -  PATH E NOME FILE GENERATO (PREIMPOSTATO)
-</br><b>AWSPORT</b>  -  PORTA DEL DB
-</br><b>FILCRDS</b>  -  NOME FILE CREDENZIALI (default AWS)
-</br><b>PATCRDS</b>  -  PATH FILE CREDENZIALI (default AWS)
+Bash script to obtain AWS Postgres DB tokens from preset profiles with quick selection.
+The script also allows saving the last generated token to a file and manually selecting connection parameters from those registered.
+
+# Configuration Variables
+
+<b>GENFILE</b>  -  IF 1, GENERATES FILE AND OPENS WITH GEDIT; IF 0, DISPLAYS TOKEN IN SHELL
+</br><b>OPNFILE</b>  -  IF 1, OPENS FILE WITH GEDIT AFTER GENERATION
+</br><b>FILTOKN</b>  -  NAME AND EXTENSION OF THE GENERATED FILE
+</br><b>PATTOKN</b>  -  PATH AND NAME OF THE GENERATED FILE (PREDEFINED)
+</br><b>AWSPORT</b>  -  DB PORT
+</br><b>FILCRDS</b>  -  NAME OF THE CREDENTIALS FILE (default AWS)
+</br><b>PATCRDS</b>  -  PATH TO CREDENTIALS FILE (default AWS)
 </br>
-</br><b>AWSHOSTS</b> -  ARRAY DEGLI HOST DISPONIBILI 
-</br><b>AWSUSERS</b> -  ARRAY DEGLI USER DISPONIBILI 
-</br><b>AWSCRDSS</b> -  ARRAY DELLE CREDENZIALI ESTRATTE DA FILE credentials
+</br><b>AWSHOSTS</b> -  ARRAY OF AVAILABLE HOSTS 
+</br><b>AWSUSERS</b> -  ARRAY OF AVAILABLE USERS 
+</br><b>AWSCRDSS</b> -  ARRAY OF CREDENTIALS EXTRACTED FROM THE CREDENTIALS FILE
 </br>
-</br><b>MAINPRR</b>  -  PROFILO PRESELEZIONATO,
-</br>                  SE "NOME_PROFILO" IMPIEGA DIRETTAMENTE PROFILO PREIMPOSTATO
-</br>                  SE "" ABILITA SCELTA (vedi gestione profili per dettagli),
-</br>                  SE "MANUAL", RICHIEDE DIRETTAMENTE SELEZIONE SINGOLI ELEMENTI DA VARI ARRAY
+</br><b>MAINPRR</b>  -  PRESELECTED PROFILE,
+</br>                  IF "PROFILE_NAME" USES DIRECTLY THE PRESET PROFILE
+</br>                  IF "" ENABLES CHOICE (see profile management for details),
+</br>                  IF "MANUAL", DIRECTLY REQUESTS SELECTION OF INDIVIDUAL ELEMENTS FROM VARIOUS ARRAYS
                   
+# Profile Management
 
-# Gestione profili
-
-Si può aggiungere un profilo all'array MAINPRFS rispettando la nomenclatura ["NOME_PROFILO","NOME_PARAMETRO"]
-e valorizzare i parametri con i dati provenienti dagli array precedenti (AWSHOSTS,AWSUSERS,AWSCRDSS)
-esempio di profilo:
+You can add a profile to the MAINPRFS array following the naming convention ["PROFILE_NAME","PARAMETER_NAME"]
+and set the parameters with data from the previous arrays (AWSHOSTS, AWSUSERS, AWSCRDSS)
+example of a profile:
 
 MAINPRFS["DEVELOPMENT","AWSHOST"]=${AWSHOSTS[DEVELOPMENT]}
 MAINPRFS["DEVELOPMENT","AWSUSER"]=${AWSUSERS[etl_user_15]}
 MAINPRFS["DEVELOPMENT","AWSCRDS"]="default"
 
-# Impiego script
+# Script Usage
 
-Raggiungere la path dove è presente lo script ed eseguire con ./gen_token_db_aws.sh
-
+Navigate to the path where the script is located and execute with ./gen_token_db_aws.sh
