@@ -24,7 +24,7 @@ The script also allows saving the last generated token to a file and manually se
                   
 # Profile Management
 
-You can add a profile to the MAINPRFS array following the naming convention ["PROFILE_NAME","PARAMETER_NAME"]
+You can add a profile to the MAINPRFS array following the convention ["PROFILE_NAME","PARAMETER_NAME"]
 and set the parameters with data from the previous arrays (AWSHOSTS, AWSUSERS, AWSCRDSS)
 example of a profile:
 
