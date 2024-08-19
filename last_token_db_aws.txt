@@ -1,1 +1,1 @@
-onlinedb-development.cluster-crrubykox7bs.eu-central-1.rds.amazonaws.com:5432/?Action=connect&DBUser=etl_user_15&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA4EWSUFXU2HL257S4%2F20240807%2Feu-central-1%2Frds-db%2Faws4_request&X-Amz-Date=20240807T083646Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=815cdce856b75b7ce4f96dabb0299bb66c985f2dfd98742c321f802890ce872f
+
