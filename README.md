@@ -3,6 +3,9 @@
 Bash script to obtain AWS Postgres DB tokens from preset profiles with quick selection.
 The script also allows saving the last generated token to a file and manually selecting connection parameters from those registered.
 
+![image](https://github.com/user-attachments/assets/cb67a6ec-f685-46f8-9c92-0a1721a74bff)
+
+
 # Configuration Variables
 
 <b>GENFILE</b>  -  IF 1, GENERATES FILE AND OPENS WITH GEDIT; IF 0, DISPLAYS TOKEN IN SHELL
