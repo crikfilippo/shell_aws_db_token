@@ -14,7 +14,7 @@ AWSCRDSS - 	ARRAY DELLE CREDENZIALI ESTRATTE DA FILE credentials
 
 MAINPRR  -	PROFILO PRESELEZIONATO, SE "" ABILITA SCELTA (vedi gestione profili per dettagli)
 
-#Gestione profili
+# Gestione profili
 
 Si può aggiungere un profilo all'array MAINPRFS rispettando la nomenclatura ["NOME_PROFILO","NOME_PARAMETRO"]
 e valorizzare i parametri con i dati provenienti dagli array precedenti (AWSHOSTS,AWSUSERS,AWSCRDSS)
