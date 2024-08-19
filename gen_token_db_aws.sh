@@ -11,13 +11,13 @@ FILCRDS="credentials"                   #NOME FILE CREDENZIALI (default AWS)
 PATCRDS=$HOME/.aws/$FILCRDS             #PATH FILE CREDENZIALI (default AWS)
 declare -A AWSCRDSS                     #ELENCO CREDENZIALI (estratte automaticamente)
 declare -A AWSUSERS=(                   #ELENCO UTENTI
-  ["etl_user_15"]="etl_user_15"
-  ["etl_user"]="etl_user"
+  ["etl_user_15"]="foo"
+  ["etl_user"]="bar"
 )
 
 declare -A AWSHOSTS=(                   #ELENCO HOST
-  ["DEVELOPMENT"]="onlinedb-development.cluster-crrubykox7bs.eu-central-1.rds.amazonaws.com"
-  ["INTEGRATION"]="onlinedb-moved-bedbug-2.c0kkcwcgpb14.eu-central-1.rds.amazonaws.com"
+  ["DEVELOPMENT"]="foo.amazonaws.com"
+  ["INTEGRATION"]="bar.amazonaws.com"
 )
 
 
